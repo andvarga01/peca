@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-type" content="text/html; charset=utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+.peca_container {
+}
+
+.peca_card {
+  font-family: arial, sans-serif;
+  display: inline-block;
+  /* float: left;  * andvarga */
+  margin: 10px;
+  padding: 6px;
+  border-radius: 12px;
+  box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
+  transition: 0.3s;
+  width: 230px; /* 40% */
+  background-color: #F5F5F5;
+}
+
+.peca_card:hover {
+  box-shadow: 0 8px 16px 0 rgba(0,0,0,0.2);
+  background-color: #FFF;
+}
+
+.peca_card_image {
+  width: 100%;
+  border-radius: 12px;
+}
+
+.alice_center_me {
+  margin:0 auto;
+  display:block;
+}
+
+.peca_card_container {
+  padding: 2px 16px;
+}
+
+.img_block {position:relative;}
+.checkbox {position:absolute; right:5px; bottom:3px;
+  width: 28px;
+  height: 28px;
+}
+		
+table {
+  border-collapse: collapse;
+  background-color: #f8f8f8;
+}
+
+th, td {
+  padding: 8px;
+  text-align: left;
+  border: 1px solid #ddd;
+}
+
+#row,#col {
+  width: 3em;
+}
+</style>
+
+<script type="text/JavaScript">
+  var message="No Right Clicking Allowed!";
+  function defeatIE() {if (document.all) {(message);return false;}}
+  function defeatNS(e) {
+    if (document.layers||(document.getElementById&&!document.all)) {
+      if (e.which==2||e.which==3) {(message);return false;}
+	}
+  }
+  if (document.layers) {
+    document.captureEvents(Event.MOUSEDOWN); document.onmousedown=defeatNS;
+  } else{
+    document.onmouseup = defeatNS; document.oncontextmenu = defeatIE;
+  }
+  document.oncontextmenu = new Function("return false")
+</script>
+
+
+<script>
+// https://stackoverflow.com/questions/53992415/how-to-fill-multidimensional-array-in-javascript
+// v.05d   Added global variables: count persons and items, Summ for 1.person is made, but not displayed.
+// v.06    Cards are created dinamicaly by javascript, BEFIZETETT are summarised.
+// https://www.w3schools.com/jsref/tryit.asp?filename=tryjsref_checkbox_checked2
+// http://jsfiddle.net/erSBP/1/
+// v.06b   Checkbox on image.
+// v.06c   Kiszámol.
+// v.07    Export in plain text format.
+// v.10    Editable cells with '<td contentEditable>'.
+// v.11    Right mouse click not allowed.Report in HTML format.
+//         Checkbox of lager size. https://www.geeksforgeeks.org/how-to-set-checkbox-size-in-html-css/
+// v.12    Increment nr. of items in expenditures table.
+// https://google.github.io/styleguide/jsguide.html - style guide (sorry,not followed)
+
+var all_exp = [];					// expenditures
+var all_bal = []					// balance of payment
+var cnt_prsn = 6;					// count of persons
+var cnt_items = 6;					// count of items of expenditures
+var IDX_EXP = 0;					// index in array for expenditures
+var IDX_BLNC = 1;					// index in array for balance of payment
+var IDX_DESC = 0;					// expenditures - item description
+var IDX_HUF = 1;					// expenditures - item value of expenditure
+var all_sum = 0;					// sum of all expenditures
+var main_msg = "";					// main message, containing total summ and count...
+									//let actual_date =  new Date();
+let txt_h1 = "Да здравствуют рыболовы!";
+let txt_h3 = "Egymás közötti elszámolást segítő alkalmazás";
+let users = ["Tibi","Gabó","András","Andor","Sanyi","Peti"];
+
+function docWrite(variable) {
+    document.write(variable);
+}
+
+function myFunction (idx) {
+  var s0 = '<table id="tbl' + idx + '">' +
+  '<tr><th>Kiadás megnevezése</th><th>Összege [Ft]</th></tr>';
+
+  for ( var j=0; j<cnt_items; j++ ) {
+	  s0 = s0 + '<tr><td contentEditable>' + all_exp[idx][j][IDX_DESC] 
+	          + '</td><td contentEditable>' + all_exp[idx][j][IDX_HUF] 
+			  + '</td></tr>';
+  }
+
+  s0 = s0 + 
+  '</table>' +
+  '<p><button  class="alice_center_me" onclick="myFunctionBack('+idx+');">Beírás</button>'
+
+  document.getElementById("Table" + idx).innerHTML = s0;
+}
+
+function myFunctionBack (idx) {
+  var sTableName = document.getElementById("Table" + idx);
+
+  for( var i=0;i<sTableName.children[0].childElementCount;i++) {
+	var tableRow = sTableName.children[0].children[i];
+
+	for (var j=0;j<tableRow.childElementCount;j++) {
+		var tableColumn = tableRow.children[j];
+		var s    = tableColumn.innerText;
+		var arr  = s.split("\t");
+		var item = arr[0];
+		var huf  = arr[1];
+
+		if ( j>0 && parseInt(huf) > 0) {
+			all_exp[idx][j-1][IDX_DESC] = item;
+			all_exp[idx][j-1][IDX_HUF]  = parseInt(huf);
+		}
+	}
+  }
+
+  var sum = 0;
+  for ( var j=0; j<cnt_items; j++ ) {
+	sum = sum + parseInt( all_exp[idx][j][IDX_HUF] );
+  }
+  
+  all_bal[idx][IDX_EXP] = parseInt( sum );
+  document.getElementById ("befiz" + idx).innerHTML = "Befizetett: " + parseInt( sum ) + " Ft</p>"
+  document.getElementById ("Table" + idx).innerHTML = "";
+  
+  if ( parseInt(sum) > 0) {
+	document.getElementById("check"+ idx).checked = true;
+  }
+}
+
+function onlyGoBack (idx) {
+  document.getElementById ("Table" + idx).innerHTML = "";
+}
+
+function szamolFunction () {
+  all_sum = 0;
+  var cnt_person = 0;
+  for ( var i=0; i<cnt_prsn; i++ ) {
+	if (document.getElementById("check"+ i).checked) {
+		all_sum = all_sum + all_bal[i][IDX_EXP];
+		cnt_person = cnt_person + 1;
+	}
+  }
+  //var per_person = parseInt(all_sum/cnt_person);
+  var per_person = Math.round(all_sum/cnt_person);
+
+  main_msg = "Összes költség: " + all_sum + ", osztandó " + cnt_person + " személy között. Egy személyre vetítve a költség: " + per_person + " (Ft).";
+  window.alert(main_msg);
+  document.getElementById("h5").innerHTML = main_msg;
+  
+  for ( var i=0; i<cnt_prsn; i++ ) {
+	if (document.getElementById("check"+ i).checked) {
+		//var delta = parseInt( all_bal[i][IDX_EXP] - per_person );
+		var delta = Math.round( all_bal[i][IDX_EXP] - per_person );
+		all_bal[i][IDX_BLNC] = delta;
+		var txt = "Már rendezett. ";
+		if (delta>0) { txt = "Visszajár: "; }
+		if (delta<0) { txt = "Befizetendő: "; }
+		document.getElementById ("balan" + i).innerHTML = txt +  Math.abs(delta)  + " Ft</p>";
+	} else {
+		all_bal[i][IDX_BLNC] = 0;
+		document.getElementById ("balan" + i).innerHTML = "Egyenleg : -- Ft</p>";
+	}
+  }
+}
+
+function torolFunction () {
+	clearAll();
+	for ( var i=0; i<cnt_prsn; i++ ) {
+		onlyGoBack(i);
+	}
+}
+
+function createTextData () {
+  let txt_sum  = "Összesen";
+  let txt_paid = "*** Befizetve ***";
+  let txt_no_p = "(Nem volt kiadása.)";
+  let txt_settl= "Elszámolás     (minusz:befizet, plusz:kivesz)";
+  let txt_prnt = "Nyomtatva";
+  
+  s0 =  txt_h1 + '\n' +
+		txt_h3 + '\n';
+  for ( var i=0; i<cnt_prsn; i++ ) {
+	if (document.getElementById("check"+ i).checked) {
+		s0 = s0 + "\n" + users[i] + "\n";
+		
+		s0 = s0 + "\t" + txt_paid + "\n";
+		var isEmpty = true;
+		for ( var j=0; j<cnt_items; j++ ) {
+			var huf = parseInt( all_exp[i][j][IDX_HUF] );
+			if (huf>0) {
+				isEmpty = false;
+				let item  = all_exp[i][j][IDX_DESC];
+				let price = all_exp[i][j][IDX_HUF];
+				s0 = s0 + "\t" + item + price.toString().padStart(40-item.length,".") + " Ft\n";
+			}
+		}
+		if ( isEmpty ) {
+			s0 = s0 + "\t" + txt_no_p + "\n";
+		} else {
+			s0 = s0 + "\t" + txt_sum + " :  " + all_bal[i][IDX_EXP] + " Ft\n";
+		}
+	}
+  }
+	
+  s0 = s0 + "\n" + main_msg + "\n\n" + txt_settl + "\n\n";
+  
+  for ( var i=0; i<cnt_prsn; i++ ) {
+	if (document.getElementById("check"+ i).checked) {
+		s0 = s0 + users[i] + "   " + all_bal[i][IDX_BLNC] + " Ft\n";
+	}
+  }
+
+  return s0 + "\n" + txt_prnt + ": " + actualDateAndTime();
+}
+
+function actualDateAndTime () {
+  var d = new Date();
+  let year = d.getUTCFullYear();
+  let month = d.getUTCMonth() + 1; //months from 1-12
+  let day = d.getUTCDate();
+  let hour = d.getHours();
+  let minute = d.getMinutes();
+
+  return year+"."+month+"."+day+" "+hour+":"+minute;
+}
+
+function initExpanses () {
+	for ( var i=0; i<cnt_prsn; i++ ) {
+		all_exp[i] = [];
+		for ( var j=0; j<cnt_items; j++ ) {
+			all_exp[i][j] = [];
+			all_exp[i][j][IDX_DESC] = '';
+			all_exp[i][j][IDX_HUF]  = 0;
+		}
+	 }
+}
+
+function initBalances () {
+	for ( var i=0; i<cnt_prsn; i++ ) {
+		all_bal[i] = [];
+		all_bal[i][IDX_EXP]  = 0;
+		all_bal[i][IDX_BLNC] = 0;
+	 }
+}
+
+function addExpansesItem () {
+	cnt_items = cnt_items + 1;
+	for ( var i=0; i<cnt_prsn; i++ ) {
+		all_exp[i].push(['',0]);
+	}
+
+	for ( var i=0; i<cnt_prsn; i++ ) {
+		try {
+			myFunctionBack (i);
+		} catch (error) {
+			;//skip
+		}
+	}
+	
+}
+
+function clearAll () {
+	for ( var i=0; i<cnt_prsn; i++ ) {
+		all_bal[i][IDX_EXP]  = 0;
+		all_bal[i][IDX_BLNC] = 0;
+		for ( var j=0; j<cnt_items; j++ ) {
+			all_exp[i][j][IDX_DESC] = '';
+			all_exp[i][j][IDX_HUF]  = 0;
+		}
+		document.getElementById ("befiz" + i).innerHTML = "Befizetve: -- Ft</p>";
+		document.getElementById ("balan" + i).innerHTML = "Egyenleg : -- Ft</p>";
+		document.getElementById ("check" + i).checked = false;
+	}
+	document.getElementById("h5").innerHTML = "";
+}
+
+function showCards () {
+  var s0 = ""
+  for ( var i=0; i<cnt_prsn; i++ ) {
+	s0 = s0 + '<div class="peca_card">' +
+		'<div class="img_block">' +
+	    '<img src="card' + i +'.jpg" alt="Avatar" class="peca_card_image">' +
+		'<input type="checkbox" class="checkbox" id="check' + i + '" />' +
+		'</div>' +
+		'<div class="peca_card_container">' +
+		'  <h4><b>' + users[i] + '</b></h4>' +
+		'  <p id="befiz' + i + '">Befizetett: ' + all_bal[i][IDX_EXP] + ' Ft</p>' +
+		'  <p id="balan' + i + '">Kivételre jár: ' + all_bal[i][IDX_BLNC] + ' Ft</p>' +
+		'  <button  class="alice_center_me" id="button_' + i + '" onclick="myFunction(' + i + ');">Részletek</button>' +
+		'  <p id="Table' + i + '"></p>' +
+		'</div>' +
+	  '</div>'
+  }
+  document.getElementById("peca_container").innerHTML = s0;
+}
+
+function reportInHTML() {
+  let s1 =  '<!DOCTYPE html><html><head>' +
+			'<meta http-equiv="Content-type" content="text/html; charset=utf-8">' +
+			'<meta name="viewport" content="width=device-width, initial-scale=1">' +
+			'</head><body><pre>';
+  let s2 =  '</pre></body></html>'
+  
+  return s1 + createTextData() + s2;
+}
+
+// init activity
+initExpanses();
+initBalances();
+
+</script>
+</head>
+<body>
+
+<center>
+<h1>Да здравствуют рыболовы!</h1>
+
+<h3>Egymás közötti elszámolást segítő alkalmazás</h3>
+
+<h5>Futtatható bárhol, bármikor.</h5>
+
+<p id="h5"></p>
+</center>
+
+<p id="peca_container"></p>
+<div class="peca_container">
+</div>
+
+<hr>
+
+<button id="button_szamol" onclick="szamolFunction();" >Kiszámol</button> &nbsp; &nbsp; &nbsp; &nbsp;
+<button id="button_torol"  onclick="torolFunction();"  >Bevitt adatokat töröl</button> &nbsp; &nbsp; &nbsp; &nbsp;
+<button id="button_addExp" onclick="addExpansesItem();">+Tétel</button> &nbsp; &nbsp; &nbsp; &nbsp;
+<button id="createDataFile">Adatok írása fájlba</button>
+<a download="elszamolas.html" id="downloadlink" style="display: none">Letöltés</a>
+
+<p>
+<center><i><small>Tervezte és programozta: Varga András, 2020-ban.</small><i>
+</p>
+
+<script>
+showCards();
+
+// http://jsfiddle.net/UselessCode/qm5AG/
+(function () {
+var textFile = null,
+  makeTextFile = function (text) {
+    var data = new Blob([text], {type: 'text/html'});
+
+    if (textFile !== null) {
+      window.URL.revokeObjectURL(textFile);
+    }
+    textFile = window.URL.createObjectURL(data);
+
+    return textFile;
+  };
+
+
+  var create = document.getElementById('createDataFile');
+
+  create.addEventListener('click', function () {
+    var link = document.getElementById('downloadlink');
+    link.href = makeTextFile( reportInHTML() );
+    link.style.display = 'block';
+  }, false);
+})();
+
+</script>
+
+</body>
+</html> 
